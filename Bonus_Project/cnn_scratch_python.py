@@ -27,7 +27,6 @@ class CNNLayer:
         output = np.zeros(self.output_shape)
         for i in range(self.number_of_kernels):
             for j in range(self.input_channels):
-                # output[:, :, i] += signal.correlate2d(input[:, :, j], self.kernels[:, :, j, i], mode='valid')
                 imageChannel = input[:, :, j]
                 filter = self.kernels[:, :, j, i]
                 result = np.zeros((imageChannel.shape[0] - filter.shape[0] + 1, imageChannel.shape[1] - filter.shape[1] + 1))
@@ -49,7 +48,6 @@ class CNNLayer:
         kernel_grads = np.zeros(self.kernels.shape)
         for i in range(self.number_of_kernels):
             for j in range(self.input_channels):
-                # kernel_grads[:, :, j, i] = signal.correlate2d(input[:, :, j], gradWRTMyOutput[:, :, i], mode='valid')
                 channel = input[:, :, j]
                 kernel = gradWRTMyOutput[:, :, i]
                 result = np.zeros((channel.shape[0] - kernel.shape[0] + 1, channel.shape[1] - kernel.shape[1] + 1))
@@ -65,7 +63,6 @@ class CNNLayer:
         input_grads = np.zeros(input.shape)
         for j in range(self.input_channels):
             for i in range(self.number_of_kernels):
-                # input_grads[:, :, j] += signal.convolve2d(gradWRTMyOutput[:, :, i], self.kernels[:, :, j, i], mode='full')
                 channel = gradWRTMyOutput[:, :, i]
                 kernel = self.kernels[:, :, j, i]
                 kernel = np.flip(kernel)
@@ -212,6 +209,11 @@ class SoftmaxCrossEntropyLayer:
         grad = self.output - y_true
         return grad
 
+def cross_entropy_loss(y_true, y_pred):
+    epsilon = 1e-12
+    y_pred = np.clip(y_pred, epsilon, 1. - epsilon)
+    return -np.sum(y_true * np.log(y_pred + epsilon)) / y_true.shape[0]
+
 def to_categorical(y, num_classes):
     return np.eye(num_classes)[y]
 
@@ -230,10 +232,7 @@ x_test = x_test.reshape(x_test.shape[0], 28, 28, 1).astype('float32') / 255
 y_train = to_categorical(y_train, 10)
 y_test = to_categorical(y_test, 10)
 
-def cross_entropy_loss(y_true, y_pred):
-    epsilon = 1e-12
-    y_pred = np.clip(y_pred, epsilon, 1. - epsilon)
-    return -np.sum(y_true * np.log(y_pred + epsilon)) / y_true.shape[0]
+
 
 firstCnnLayer = CNNLayer(kernel_size=3, number_of_kernels=2, input_shape=(28, 28, 1))
 sigmoidLayer = SigmoidLayer(input_shape=(26, 26, 2))
